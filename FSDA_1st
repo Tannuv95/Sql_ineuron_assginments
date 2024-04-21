@@ -1,0 +1,174 @@
+---------------------Task 1---------------------------------------
+
+
+create database shop;
+use database shop;
+
+create table if not exists shopping_history(
+product varchar not null,
+quantity integer not null,
+unit_price integer not null
+);
+
+Insert into shopping_history values('milk',3,10);
+Insert into shopping_history values('bread',7,3);
+Insert into shopping_history values('bread',5,2);
+Insert into shopping_history values('butter',3,10);
+Insert into shopping_history values('Yogurt',10,9);
+Insert into shopping_history values('cheese',7,10);
+Insert into shopping_history values('cheese',6,10);
+Insert into shopping_history values('Ghee',4,10);
+Insert into shopping_history values('cream',6,16);
+Insert into shopping_history values('cream',5,10);
+--to show colums
+select * from shopping_history;
+
+-- total price of each product
+select product, sum(unit_price) as total_price from shopping_history
+group by product
+
+
+
+---------------------------------------Task 2----------------------------
+
+create table if not exists phones (
+    name varchar(20) not null unique,
+    phone_number integer not null unique
+    );
+
+create table if not exists  calls(
+    id integer not null,
+    caller integer not null,
+    callee integer not null,
+    duration integer not null,
+    unique(id)
+    );
+
+insert into phones values ('Jack',1234);
+insert into phones values ('Lena',3333);
+insert into phones values ('Mark',9999);
+insert into phones values ('Anna',7582);
+select * from phones;
+
+insert into calls values(25,1234,7582,8);
+insert into calls values(7,9999,7582,1);
+insert into calls values(18,9999,3333,4);
+insert into calls values(2,7582,3333,3);
+insert into calls values(3,3333,1234,1);
+insert into calls values(21,3333,1234,1);
+select * from calls;
+
+
+
+SELECT phones.name
+FROM phones
+JOIN (
+    SELECT caller AS phone_number, duration FROM calls
+    UNION ALL
+    SELECT callee AS phone_number, duration FROM calls
+) AS all_calls ON phones.phone_number = all_calls.phone_number
+GROUP BY phones.name
+HAVING sum(all_calls.duration)>=10
+ORDER BY phones.name;
+
+----------------------Task 3----------------------------------------------
+
+
+create table transactions(
+    amount integer not null,
+    date date not null
+    );
+
+  INSERT INTO transactions (Amount, Date) VALUES 
+  (1, '2020-06-29'),
+  (35, '2020-02-20'),
+  (-50, '2020-02-03'),
+  (-1, '2020-02-26'),
+  (-200, '2020-08-01'),
+  (-44, '2020-02-07'),
+  (-5, '2020-02-25'),
+  (1, '2020-06-29'),
+  (1, '2020-06-29'),
+  (-100, '2020-12-29'),
+  (-100, '2020-12-30'),
+  (-100, '2020-12-31');
+select date  from transactions;
+
+select sum(amount) from transactions;
+
+
+
+------------------------------------calculate credit charge----------------------------
+SELECT SUM(fee) AS total_fee
+FROM (
+
+WITH RECURSIVE months_series AS (
+    SELECT 1 AS month
+    UNION ALL
+    SELECT month + 1
+    FROM months_series
+    WHERE month < 12
+),
+monthly_balances AS (
+    SELECT
+        months_series.month,
+        COUNT(CASE WHEN EXTRACT(MONTH FROM transactions.date) = months_series.month AND transactions.amount < 0 THEN 1 END)
+        AS credit_card_transactions,
+        
+        SUM(CASE WHEN amount < 0 AND EXTRACT(MONTH FROM transactions.date) = months_series.month THEN amount ELSE 0 END)
+        AS credit_card_payments
+    FROM months_series
+    LEFT JOIN transactions ON EXTRACT(MONTH FROM transactions.date) = months_series.month
+    GROUP BY months_series.month
+)
+,
+   fees AS 
+    (
+SELECT
+    month,
+    credit_card_transactions,
+    credit_card_payments,
+    CASE 
+        WHEN credit_card_payments <= -100 and credit_card_transactions >= 3 THEN 0
+        ELSE -5
+    END AS fee
+FROM monthly_balances 
+ORDER BY month
+)
+    SELECT fee FROM fees
+) AS subquery;
+
+-----------------------Total balance---------------------
+
+WITH RECURSIVE months_series AS (
+    SELECT 1 AS month
+    UNION ALL
+    SELECT month + 1
+    FROM months_series
+    WHERE month < 12
+),
+monthly_balances AS (
+    SELECT
+        months_series.month,
+        COUNT(CASE WHEN EXTRACT(MONTH FROM transactions.date) = months_series.month AND transactions.amount < 0 THEN 1 END)
+        AS credit_card_transactions,
+        
+        SUM(CASE WHEN amount < 0 AND EXTRACT(MONTH FROM transactions.date) = months_series.month THEN amount ELSE 0 END)
+        AS credit_card_payments
+    FROM months_series
+    LEFT JOIN transactions ON EXTRACT(MONTH FROM transactions.date) = months_series.month
+    GROUP BY months_series.month
+),
+fees AS (
+    SELECT
+        month,
+        CASE 
+            WHEN credit_card_payments <= -100 AND credit_card_transactions >= 3 THEN 0
+            ELSE -5
+        END AS fee
+    FROM monthly_balances 
+    ORDER BY month
+)
+SELECT 
+    (SELECT SUM(amount) FROM transactions) + (SELECT SUM(fee) FROM fees) AS balance; -- charge is in negative sign
+
