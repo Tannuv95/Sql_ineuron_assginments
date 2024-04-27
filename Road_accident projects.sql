@@ -1,4 +1,4 @@
-CREATE SCHEMA accidents;
+CREATE Database accidents;
 
 USE accidents;
 
@@ -60,7 +60,8 @@ select * from vehicles;
 
 select * from vehicle_types;
 
--- 1. Evaluate the median severity value of accidents caused by various Motorcycles.
+--- 1. Evaluate the median severity value of accidents caused by various Motorcycles.------------
+
 create table accidents_median(
 vehicle_types varchar(100),
 severity int);
@@ -89,31 +90,9 @@ WHERE
     row_num IN (CEILING(total_rows/2), FLOOR(total_rows/2) + 1)
 GROUP BY 
     vehicle_type;
-/* SELECT 
-        vt.vehicle_type,
-        a.accident_severity AS median_severity,
-        ROW_NUMBER() OVER (PARTITION BY vt.vehicle_type ORDER BY a.accident_severity) AS row_num,
-        COUNT(*) OVER (PARTITION BY vt.vehicle_type) AS total_rows
-    FROM 
-        accident a
-    JOIN 
-        vehicles v ON a.accident_index = v.accident_index
-    JOIN 
-        vehicle_types vt ON v.vehicle_type = vt.vehicle_code
-    WHERE 
-        vt.vehicle_type LIKE '%motorcycle%';*/
-select `Vehicle Type`, Severity,`index`from( select v.vehicle_type AS 'Vehicle Type', 
-       a.accident_severity AS 'Severity', a.accident_index as 'index'
-       FROM accident a 
-JOIN vehicles v ON a.accident_index = v.accident_index ) AS subquery WHERE subquery.`Vehicle Type` = 23;
 
-CREATE INDEX accident_index
-ON accident(accident_index);
 
-CREATE INDEX accident_index
-ON vehicles(accident_index);
-
--- 2. Evaluate Accident Severity and Total Accidents per Vehicle Type
+---------- 2. Evaluate Accident Severity and Total Accidents per Vehicle Type-----------------
 
 SELECT vt.vehicle_type AS 'Vehicle Type', 
        a.accident_severity AS 'Severity', 
@@ -125,15 +104,7 @@ GROUP BY vt.vehicle_type, a.accident_severity
 ORDER BY 2, 3;
 
 
-
-/* select sum(total_accidents) from(
-SELECT vt.vehicle_type, COUNT(*) AS total_accidents
-FROM accident a
-JOIN vehicles v ON a.accident_index = v.accident_index
-JOIN vehicle_types vt ON v.vehicle_type = vt.vehicle_code
-GROUP BY vt.vehicle_type) AS subquery;*/
-
--- 3. Calculate the Average Severity by vehicle type.
+----------- 3. Calculate the Average Severity by vehicle type.----------------
 
 SELECT vt.vehicle_type, AVG(a.accident_severity) AS avg_severity
 FROM accident a
@@ -142,7 +113,7 @@ JOIN vehicle_types vt ON v.vehicle_type = vt.vehicle_code
 GROUP BY vt.vehicle_type;
 
 
--- 4. Calculate the Average Severity and Total Accidents by Motorcycle.
+-------------4. Calculate the Average Severity and Total Accidents by Motorcycle.--------------
 
 SELECT vt.vehicle_type AS 'Vehicle Type', 
        AVG(a.accident_severity) AS 'Average Severity', 
